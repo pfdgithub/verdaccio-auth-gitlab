@@ -1,6 +1,6 @@
 {
   "name": "verdaccio-auth-gitlab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Verdaccio authentication plugin by gitlab personal access token.",
   "main": "src/index.js",
   "scripts": {
