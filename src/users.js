@@ -24,7 +24,14 @@ class Users {
       return;
     }
 
-    return this.users.get(user);
+    let value = this.users.get(user);
+    if (this.isStaleUser(value)) {
+      this.users.delete(user);
+      return;
+    }
+    else {
+      return value;
+    }
   }
 
   setUser(user, groups) {
@@ -38,15 +45,19 @@ class Users {
         this.logger.info('[cache]', `Cleaned the oldest user: ${key}`);
       }
       else {
-        let count = this.deleteStaleUser();
+        let count = this.deleteAllStaleUser();
         this.logger.info('[cache]', `Cleaned stale user count: ${count}`);
       }
     }
 
     this.users.set(user, {
-      timestamp: Date.now(),
+      lastModified: Date.now(),
       groups: groups
     });
+  }
+
+  isStaleUser(value) {
+    return value && ((Date.now() - value.lastModified) >= (this.maxSecond * 1000));
   }
 
   deleteOldestUser() {
@@ -58,11 +69,11 @@ class Users {
     return oldestKey;
   }
 
-  deleteStaleUser() {
+  deleteAllStaleUser() {
     let keys = [];
 
     this.users.forEach((value, key) => {
-      if (value && ((Date.now() - value.timestamp) >= (this.maxSecond * 1000))) {
+      if (this.isStaleUser(value)) {
         keys.push(key);
       }
     });
