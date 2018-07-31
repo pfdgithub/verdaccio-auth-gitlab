@@ -13,6 +13,7 @@ class Auth {
     this.config = null;
     this.options = null;
 
+    this.authQueue = null;
     this.users = null;
     this.logger = null
 
@@ -86,6 +87,7 @@ class Auth {
       }
     }
 
+    this.authQueue = new Map();
     this.logger = new Logger(options.logger);
     this.users = new Users(this.logger, this.cache.maxCount, this.cache.maxSecond);
 
@@ -104,7 +106,37 @@ class Auth {
       this.logger.info('[authenticate]', `User ${user} missing cache`);
     }
 
-    this.checkRole(user, password, cb);
+    // Queue the auth request
+    let queue = this.authQueue.get(user);
+    let newQueue = (queue || []).concat([cb]);
+    this.authQueue.set(user, newQueue);
+
+    // Allow the first auth request
+    if (newQueue.length > 1) {
+      this.logger.info('[authenticate]', `Queue the follow-up request: ${newQueue.length}`);
+      return;
+    }
+
+    this.logger.info('[authenticate]', `Allow the first request: ${newQueue.length}`);
+
+    this.checkRole(user, password, (error, roleList) => {
+      // Clear queue
+      let queue = this.authQueue.get(user);
+      this.authQueue.delete(user);
+
+      if (error) {
+        queue.forEach((cb) => {
+          cb(error);
+        });
+      }
+      else {
+        this.users.setUser(user, roleList);
+
+        queue.forEach((cb) => {
+          cb(null, roleList);
+        });
+      }
+    });
   }
 
   add_user(user, password, cb) {
@@ -257,8 +289,6 @@ class Auth {
 
     Promise.all(rolePromises).then(() => {
       this.logger.info('[checkRole]', `User ${user} role: ${roleList.toString()}`);
-
-      this.users.setUser(user, roleList);
 
       return cb(null, roleList);
     }).catch((error) => {
