@@ -16,22 +16,36 @@ auth:
   auth-gitlab:
     # Gitlab server (default: https://gitlab.com)
     url: https://gitlab.com
+
     # Check gitlab Role
     role:
       # Gitlab user role (default: true)
       # Warning: Set to false will disable all role
+      #          Disable user role will make it impossible to check the relevance between username and token
       user: true
-      # Gitlab group role (default: false)
+
+      # Gitlab group owner role (default: false)
       # Warning: Set to true will cause performance degradation
-      group: false
-      # Gitlab project role (default: false)
+      groupOwner: false
+
+      # Gitlab group member role (default: false)
       # Warning: Set to true will cause performance degradation
-      project: false
+      groupMember: false
+
+      # Gitlab project owner role (default: false)
+      # Warning: Set to true will cause performance degradation
+      projectOwner: false
+
+      # Gitlab project member role (default: false)
+      # Warning: Set to true will cause performance degradation
+      projectMember: false
+
     # Cache gitlab user
     cache:
       # Max cache count (default: 1000)
       # Warning: Set to 0 will cause performance degradation
       maxCount: 1000
+
       # Max cache second (default: 300)
       # Warning: Set to 0 will cause performance degradation
       maxSecond: 300

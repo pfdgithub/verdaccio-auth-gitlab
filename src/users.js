@@ -1,9 +1,7 @@
-const Logger = require('./logger');
-
 class Users {
   classProperties() {
+    this.logger = null;
     this.users = null;
-    this.logger = null
 
     this.maxCount = 0;
     this.maxSecond = 0;
@@ -12,8 +10,8 @@ class Users {
   constructor(logger, maxCount, maxSecond) {
     this.classProperties();
 
-    this.users = new Map();
     this.logger = logger;
+    this.users = new Map();
 
     this.maxCount = maxCount > 0 ? maxCount : 0;
     this.maxSecond = maxSecond > 0 ? maxSecond : 0;
@@ -42,11 +40,11 @@ class Users {
     if (this.users.size >= this.maxCount) {
       if (this.maxSecond === 0) {
         let key = deleteOldestUser();
-        this.logger.info('[cache]', `Cleaned the oldest user: ${key}`);
+        this.logger.info('[userCache]', `Cleaned the oldest user: ${key}`);
       }
       else {
         let count = this.deleteAllStaleUser();
-        this.logger.info('[cache]', `Cleaned stale user count: ${count}`);
+        this.logger.info('[userCache]', `Cleaned stale user count: ${count}`);
       }
     }
 

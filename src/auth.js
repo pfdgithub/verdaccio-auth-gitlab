@@ -1,8 +1,8 @@
-const Gitlab = require('gitlab/dist/es5').default;
-
 const Logger = require('./logger');
 const Users = require('./users');
-const roles = require('./roles');
+const Roles = require('./roles');
+const Queue = require('./queue');
+const roleUtil = require('./roleUtil');
 
 const URL = 'https://gitlab.com';
 const MAX_COUNT = 1000;
@@ -13,15 +13,17 @@ class Auth {
     this.config = null;
     this.options = null;
 
-    this.authQueue = null;
+    this.logger = null;
     this.users = null;
-    this.logger = null
+    this.authQueue = null;
 
     this.url = URL;
     this.role = {
       user: true,
-      group: false,
-      project: false
+      groupOwner: false,
+      groupMember: false,
+      projectOwner: false,
+      projectMember: false
     };
     this.cache = {
       maxCount: MAX_COUNT,
@@ -33,8 +35,10 @@ class Auth {
     url: URL,
     role: {
       user: true,
-      group: false,
-      project: false
+      groupOwner: false,
+      groupMember: false,
+      projectOwner: false,
+      projectMember: false
     },
     cache: {
       maxCount: MAX_COUNT,
@@ -62,17 +66,21 @@ class Auth {
       }
 
       // Disable user role will make it impossible to check the relevance between username and token.
-      if (config.role.user === false) {
-        this.role.group = false;
-        this.role.project = false;
-      }
-      else {
-        if (typeof (config.role.group) === 'boolean') {
-          this.role.group = config.role.group;
+      if (config.role.user === true) {
+        if (typeof (config.role.groupOwner) === 'boolean') {
+          this.role.groupOwner = config.role.groupOwner;
         }
 
-        if (typeof (config.role.project) === 'boolean') {
-          this.role.project = config.role.project;
+        if (typeof (config.role.groupMember) === 'boolean') {
+          this.role.groupMember = config.role.groupMember;
+        }
+
+        if (typeof (config.role.projectOwner) === 'boolean') {
+          this.role.projectOwner = config.role.projectOwner;
+        }
+
+        if (typeof (config.role.projectMember) === 'boolean') {
+          this.role.projectMember = config.role.projectMember;
         }
       }
     }
@@ -87,14 +95,15 @@ class Auth {
       }
     }
 
-    this.authQueue = new Map();
     this.logger = new Logger(options.logger);
     this.users = new Users(this.logger, this.cache.maxCount, this.cache.maxSecond);
+    this.authQueue = new Queue(this.logger);
 
     this.logger.info('[initParams]', config);
   }
 
   authenticate(user, password, cb) {
+    // Check cache
     let userCache = this.users.getUser(user);
 
     if (userCache) {
@@ -107,50 +116,30 @@ class Auth {
     }
 
     // Queue the auth request
-    let queue = this.authQueue.get(user);
-    let newQueue = (queue || []).concat([cb]);
-    this.authQueue.set(user, newQueue);
+    this.authQueue.push(user, cb, (cb) => {
+      // Auth request
+      this.checkRole(user, password, (error, roleList) => {
+        if (!error) {
+          // Update cache
+          this.users.setUser(user, roleList);
+        }
 
-    // Allow the first auth request
-    if (newQueue.length > 1) {
-      this.logger.info('[authenticate]', `Queue the follow-up request: ${newQueue.length}`);
-      return;
-    }
-
-    this.logger.info('[authenticate]', `Allow the first request: ${newQueue.length}`);
-
-    this.checkRole(user, password, (error, roleList) => {
-      // Clear queue
-      let queue = this.authQueue.get(user);
-      this.authQueue.delete(user);
-
-      if (error) {
-        queue.forEach((cb) => {
-          cb(error);
-        });
-      }
-      else {
-        this.users.setUser(user, roleList);
-
-        queue.forEach((cb) => {
-          cb(null, roleList);
-        });
-      }
+        cb(error, roleList);
+      });
     });
   }
 
   add_user(user, password, cb) {
-    this.checkRole(user, password, (error, groups) => {
-      if (error) {
-        this.logger.info('[add_user]', `Add user ${user} failed: ${error.message}`);
+    let roles = new Roles(this.logger, this.url, password);
 
-        return cb(error, false);
-      }
-      else {
-        this.logger.info('[add_user]', `Add user: ${user}`);
+    roles.userCurrent(user).then(() => {
+      this.logger.info('[add_user]', `Add user: ${user}`);
 
-        return cb(null, true);
-      }
+      return cb(null, true);
+    }).cache((error) => {
+      this.logger.info('[add_user]', `Add user ${user} failed: ${error.message}`);
+
+      return cb(error);
     });
   }
 
@@ -170,6 +159,8 @@ class Auth {
     let pkgScope = '';
     let pkgName = '';
     let fullName = pkg.name || '';
+
+    // '@scope/name' -> ['@scope/name', '@scope/', 'scope', 'name']
     let match = fullName.match(/^(@([^@\/]+)\/)?([^@\/]+)$/);
     if (match) {
       pkgScope = match[2] || '';
@@ -179,8 +170,8 @@ class Auth {
     for (let i = 0; i < actionRoles.length; i++) {
       let actionRole = actionRoles[i];
 
-      if (roles.isPluginRole(actionRole)) {
-        actionRole = roles.replacePlaceholder(actionRole, {
+      if (roleUtil.isPluginRole(actionRole)) {
+        actionRole = roleUtil.replacePlaceholder(actionRole, {
           pkgScope,
           pkgName
         });
@@ -199,92 +190,43 @@ class Auth {
   }
 
   checkRole(user, password, cb) {
-    let api = new Gitlab({
-      url: this.url,
-      token: password
-    });
-
     let roleList = [];
     let rolePromises = [];
+    let roles = new Roles(this.logger, this.url, password);
 
     if (this.role.user) {
-      /**
-       * https://github.com/jdalrymple/node-gitlab/blob/master/src/services/Users.js#L29
-       * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/users.md#for-normal-users-1
-       */
-      let promise = api.Users.current(
-      ).then((res) => {
-        let role = roles.getUserRole();
-        roleList.push(role);
-
-        if (res && res.username === user) {
-          let role = roles.getUserRole(res.username);
-          roleList.push(role);
-        }
-        else {
-          throw new Error(`Username ${user} and token ${password} do not match`);
-        }
+      let promise = roles.userCurrent(user).then((list) => {
+        roleList = roleList.concat(list);
       });
       rolePromises.push(promise);
     }
 
-    if (this.role.group) {
-      /**
-       * https://github.com/jdalrymple/node-gitlab/blob/master/src/services/Groups.js#L4
-       * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
-       */
-      let promise_owner = api.Groups.all({
-        owned: true
-      }).then((res) => {
-        if (res && res.length > 0) {
-          res.forEach((item) => {
-            let role = roles.getGroupRole(item.path, 'owner');
-            roleList.push(role);
-          });
-        }
+    if (this.role.groupOwner) {
+      let promise = roles.groupOwner().then((list) => {
+        roleList = roleList.concat(list);
       });
-      rolePromises.push(promise_owner);
-
-      let promise_member = api.Groups.all(
-      ).then((res) => {
-        if (res && res.length > 0) {
-          res.forEach((item) => {
-            let role = roles.getGroupRole(item.path, 'member');
-            roleList.push(role);
-          });
-        }
-      });
-      rolePromises.push(promise_member);
+      rolePromises.push(promise);
     }
 
-    if (this.role.project) {
-      /**
-       * https://github.com/jdalrymple/node-gitlab/blob/master/src/services/Projects.js#L7
-       * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#list-all-projects
-       */
-      let promise_owner = api.Projects.all({
-        owned: true
-      }).then((res) => {
-        if (res && res.length > 0) {
-          res.forEach((item) => {
-            let role = roles.getProjectRole(item.path, 'owner');
-            roleList.push(role);
-          });
-        }
+    if (this.role.groupMember) {
+      let promise = roles.groupMember().then((list) => {
+        roleList = roleList.concat(list);
       });
-      rolePromises.push(promise_owner);
+      rolePromises.push(promise);
+    }
 
-      let promise_member = api.Projects.all({
-        membership: true
-      }).then((res) => {
-        if (res && res.length > 0) {
-          res.forEach((item) => {
-            let role = roles.getProjectRole(item.path, 'member');
-            roleList.push(role);
-          });
-        }
+    if (this.role.projectOwner) {
+      let promise = roles.projectOwner().then((list) => {
+        roleList = roleList.concat(list);
       });
-      rolePromises.push(promise_member);
+      rolePromises.push(promise);
+    }
+
+    if (this.role.projectMember) {
+      let promise = roles.projectMember().then((list) => {
+        roleList = roleList.concat(list);
+      });
+      rolePromises.push(promise);
     }
 
     Promise.all(rolePromises).then(() => {
