@@ -37,15 +37,16 @@ class Users {
       return;
     }
 
+    // First check
+    if (this.users.size >= this.maxCount && this.maxSecond > 0) {
+      let keys = this.deleteAllStaleUser();
+      this.logger.info('[userCache]', `Cleaned all stale user: ${keys.toString()}`);
+    }
+
+    // Second check
     if (this.users.size >= this.maxCount) {
-      if (this.maxSecond === 0) {
-        let key = deleteOldestUser();
-        this.logger.info('[userCache]', `Cleaned the oldest user: ${key}`);
-      }
-      else {
-        let count = this.deleteAllStaleUser();
-        this.logger.info('[userCache]', `Cleaned stale user count: ${count}`);
-      }
+      let key = deleteOldestUser();
+      this.logger.info('[userCache]', `Cleaned the oldest user: ${key}`);
     }
 
     this.users.set(user, {
@@ -80,7 +81,7 @@ class Users {
       this.users.delete(key);
     });
 
-    return keys.length;
+    return keys;
   }
 
 }

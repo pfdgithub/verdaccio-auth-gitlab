@@ -133,11 +133,11 @@ class Auth {
     let roles = new Roles(this.logger, this.url, password);
 
     roles.userCurrent(user).then(() => {
-      this.logger.info('[add_user]', `Add user: ${user}`);
+      this.logger.info('[add_user]', `Check gitlab user: ${user}`);
 
       return cb(null, true);
     }).cache((error) => {
-      this.logger.info('[add_user]', `Add user ${user} failed: ${error.message}`);
+      this.logger.info('[add_user]', `Check gitlab user ${user} failed: ${error.message}`);
 
       return cb(error);
     });
