@@ -136,7 +136,7 @@ class Auth {
       this.logger.info('[add_user]', `Check gitlab user: ${user}`);
 
       return cb(null, true);
-    }).cache((error) => {
+    }).catch((error) => {
       this.logger.info('[add_user]', `Check gitlab user ${user} failed: ${error.message}`);
 
       return cb(error);
