@@ -73,13 +73,35 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Groups.js#L4
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
      */
-    return this.api.Groups.all(
-    ).then((res) => {
+    return this.api.Groups.all({
+      all_available: false
+    }).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
         res.forEach((item) => {
           let role = roleUtil.getGroupRole(item.path, 'member');
+          roleList.push(role);
+        });
+      }
+
+      return roleList;
+    });
+  }
+
+  groupMinAccessLevel(level) {
+    /**
+     * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Groups.js#L4
+     * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
+     */
+    return this.api.Groups.all({
+      min_access_level: level
+    }).then((res) => {
+      let roleList = [];
+
+      if (res && res.length > 0) {
+        res.forEach((item) => {
+          let role = roleUtil.getGroupRole(item.path, 'level', level);
           roleList.push(role);
         });
       }
@@ -122,6 +144,27 @@ class Roles {
       if (res && res.length > 0) {
         res.forEach((item) => {
           let role = roleUtil.getProjectRole(item.path, 'member');
+          roleList.push(role);
+        });
+      }
+
+      return roleList;
+    });
+  }
+
+  projectMinAccessLevel(level) {
+    /**
+     * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Projects.js#L7
+     * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#list-all-projects
+     */
+    return this.api.Projects.all({
+      min_access_level: level
+    }).then((res) => {
+      let roleList = [];
+
+      if (res && res.length > 0) {
+        res.forEach((item) => {
+          let role = roleUtil.getProjectRole(item.path, 'level', level);
           roleList.push(role);
         });
       }

@@ -1,31 +1,37 @@
 const rolePrefix = '$gitlab';
 
 const getUserRole = (username) => {
+  let role = `${rolePrefix}:user`;
+
   if (typeof (username) === 'string') {
-    return `${rolePrefix}:user:${encodeURIComponent(username)}`;
+    role = `${role}:${encodeURIComponent(username)}`;
   }
-  else {
-    return `${rolePrefix}:user`;
-  }
+
+  return role;
 };
 
-const getGroupRole = (path, permission = 'owner') => {
-  if (typeof (path) === 'string'
-    && typeof (permission) === 'string') {
-    return `${rolePrefix}:group:${encodeURIComponent(path)}:${encodeURIComponent(permission)}`;
+const getGroupRole = (path, permission, level) => {
+  let role = `${rolePrefix}:group:${encodeURIComponent(path)}:${permission}`;
+
+  if (typeof (level) === 'number') {
+    role = `${role}:${level}`;
   }
+
+  return role;
 };
 
-const getProjectRole = (path, permission = 'owner') => {
-  if (typeof (path) === 'string'
-    && typeof (permission) === 'string') {
-    return `${rolePrefix}:project:${encodeURIComponent(path)}:${encodeURIComponent(permission)}`;
+const getProjectRole = (path, permission, level) => {
+  let role = `${rolePrefix}:project:${encodeURIComponent(path)}:${permission}`;
+
+  if (typeof (level) === 'number') {
+    role = `${role}:${level}`;
   }
+
+  return role;
 };
 
 const isPluginRole = (role) => {
-  if (typeof (role) === 'string'
-    && role.startsWith(rolePrefix)) {
+  if (typeof (role) === 'string' && role.startsWith(rolePrefix)) {
     return true;
   }
 
@@ -38,8 +44,7 @@ const replacePlaceholder = (role, data = {
 }) => {
   let newRole = role;
 
-  if (typeof (role) === 'string'
-    && typeof (data) === 'object') {
+  if (typeof (role) === 'string' && typeof (data) === 'object') {
     for (let key in data) {
       let val = data[key];
       let reg = new RegExp(`\\[${key}\\]`, 'g');

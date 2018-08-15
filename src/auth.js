@@ -22,8 +22,10 @@ class Auth {
       user: true,
       groupOwner: false,
       groupMember: false,
+      groupMinAccessLevel: [],
       projectOwner: false,
-      projectMember: false
+      projectMember: false,
+      projectMinAccessLevel: []
     };
     this.cache = {
       maxCount: MAX_COUNT,
@@ -31,22 +33,7 @@ class Auth {
     };
   }
 
-  constructor(config = {
-    url: URL,
-    role: {
-      user: true,
-      groupOwner: false,
-      groupMember: false,
-      projectOwner: false,
-      projectMember: false
-    },
-    cache: {
-      maxCount: MAX_COUNT,
-      maxSecond: MAX_SECOND
-    }
-  }, options = {
-    logger: null
-  }) {
+  constructor(config, options) {
     this.classProperties();
 
     this.config = config;
@@ -56,41 +43,53 @@ class Auth {
   }
 
   initParams(config, options) {
-    if (typeof (config.url) === 'string') {
+    let isType = (value, type) => {
+      return Object.prototype.toString.call(value) === `[object ${type}]`;
+    };
+
+    if (isType(config.url, 'String')) {
       this.url = config.url;
     }
 
-    if (typeof (config.role) === 'object') {
-      if (typeof (config.role.user) === 'boolean') {
+    if (isType(config.role, 'Object')) {
+      if (isType(config.role.user, 'Boolean')) {
         this.role.user = config.role.user;
       }
 
       // Disable user role will make it impossible to check the relevance between username and token.
       if (config.role.user === true) {
-        if (typeof (config.role.groupOwner) === 'boolean') {
+        if (isType(config.role.groupOwner, 'Boolean')) {
           this.role.groupOwner = config.role.groupOwner;
         }
 
-        if (typeof (config.role.groupMember) === 'boolean') {
+        if (isType(config.role.groupMember, 'Boolean')) {
           this.role.groupMember = config.role.groupMember;
         }
 
-        if (typeof (config.role.projectOwner) === 'boolean') {
+        if (isType(config.role.groupMinAccessLevel, 'Array')) {
+          this.role.groupMinAccessLevel = config.role.groupMinAccessLevel;
+        }
+
+        if (isType(config.role.projectOwner, 'Boolean')) {
           this.role.projectOwner = config.role.projectOwner;
         }
 
-        if (typeof (config.role.projectMember) === 'boolean') {
+        if (isType(config.role.projectMember, 'Boolean')) {
           this.role.projectMember = config.role.projectMember;
+        }
+
+        if (isType(config.role.projectMinAccessLevel, 'Array')) {
+          this.role.projectMinAccessLevel = config.role.projectMinAccessLevel;
         }
       }
     }
 
-    if (typeof (config.cache) === 'object') {
-      if (typeof (config.cache.maxCount) === 'number') {
+    if (isType(config.cache, 'Object')) {
+      if (isType(config.cache.maxCount, 'Number')) {
         this.cache.maxCount = config.cache.maxCount;
       }
 
-      if (typeof (config.cache.maxSecond) === 'number') {
+      if (isType(config.cache.maxSecond, 'Number')) {
         this.cache.maxSecond = config.cache.maxSecond;
       }
     }
@@ -194,39 +193,49 @@ class Auth {
     let rolePromises = [];
     let roles = new Roles(this.logger, this.url, password);
 
+    let addRole = (list) => {
+      roleList = roleList.concat(list);
+    };
+
     if (this.role.user) {
-      let promise = roles.userCurrent(user).then((list) => {
-        roleList = roleList.concat(list);
-      });
+      let promise = roles.userCurrent(user).then(addRole);
       rolePromises.push(promise);
     }
 
     if (this.role.groupOwner) {
-      let promise = roles.groupOwner().then((list) => {
-        roleList = roleList.concat(list);
-      });
+      let promise = roles.groupOwner().then(addRole);
       rolePromises.push(promise);
     }
 
     if (this.role.groupMember) {
-      let promise = roles.groupMember().then((list) => {
-        roleList = roleList.concat(list);
-      });
+      let promise = roles.groupMember().then(addRole);
       rolePromises.push(promise);
     }
 
+    if (this.role.groupMinAccessLevel.length > 0) {
+      for (let i = 0; i < this.role.groupMinAccessLevel.length; i++) {
+        let level = this.role.groupMinAccessLevel[i];
+        let promise = roles.groupMinAccessLevel(level).then(addRole);
+        rolePromises.push(promise);
+      }
+    }
+
     if (this.role.projectOwner) {
-      let promise = roles.projectOwner().then((list) => {
-        roleList = roleList.concat(list);
-      });
+      let promise = roles.projectOwner().then(addRole);
       rolePromises.push(promise);
     }
 
     if (this.role.projectMember) {
-      let promise = roles.projectMember().then((list) => {
-        roleList = roleList.concat(list);
-      });
+      let promise = roles.projectMember().then(addRole);
       rolePromises.push(promise);
+    }
+
+    if (this.role.projectMinAccessLevel.length > 0) {
+      for (let i = 0; i < this.role.projectMinAccessLevel.length; i++) {
+        let level = this.role.projectMinAccessLevel[i];
+        let promise = roles.projectMinAccessLevel(level).then(addRole);
+        rolePromises.push(promise);
+      }
     }
 
     Promise.all(rolePromises).then(() => {
