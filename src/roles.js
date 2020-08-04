@@ -1,4 +1,4 @@
-const Gitlab = require('gitlab/dist/es5').default;
+const { Gitlab } = require('@gitbeaker/node');
 const roleUtil = require('./roleUtil');
 
 class Roles {
@@ -7,20 +7,38 @@ class Roles {
     this.api = null;
 
     this.url = '';
+    this.tokenType = '';
     this.token = '';
+    this.pageCfg = {};
   }
 
-  constructor(logger, url, token) {
+  constructor(logger, url, tokenType, token, pageCfg) {
     this.classProperties();
 
+    let cfg = {
+      host: url,
+    };
+    if (tokenType === 'personal') {
+      cfg.token = token;
+    } else if (tokenType === 'oauth') {
+      cfg.oauthToken = token;
+    } else if (tokenType === 'job') {
+      cfg.jobToken = token;
+    }
+
     this.logger = logger;
-    this.api = new Gitlab({
-      url: url,
-      token: token
-    });
+    this.api = new Gitlab(cfg);
 
     this.url = url;
+    this.tokenType = tokenType;
     this.token = token;
+
+    if (pageCfg.perPage > 0) {
+      this.pageCfg.perPage = pageCfg.perPage;
+    }
+    if (pageCfg.maxPages > 0) {
+      this.pageCfg.maxPages = pageCfg.maxPages;
+    }
   }
 
   userCurrent(user) {
@@ -52,11 +70,10 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Groups.js#L4
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
      */
-    return this.api.Groups.all({
+    return this.api.Groups.all(Object.assign({
       owned: true
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
       let roleList = [];
-
       if (res && res.length > 0) {
         res.forEach((item) => {
           let role = roleUtil.getGroupRole(item.path, 'owner');
@@ -73,9 +90,9 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Groups.js#L4
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
      */
-    return this.api.Groups.all({
+    return this.api.Groups.all(Object.assign({
       all_available: false
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -94,9 +111,9 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Groups.js#L4
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/groups.md#list-groups
      */
-    return this.api.Groups.all({
+    return this.api.Groups.all(Object.assign({
       min_access_level: level
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -115,9 +132,9 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Projects.js#L7
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#list-all-projects
      */
-    return this.api.Projects.all({
+    return this.api.Projects.all(Object.assign({
       owned: true
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -136,9 +153,9 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Projects.js#L7
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#list-all-projects
      */
-    return this.api.Projects.all({
+    return this.api.Projects.all(Object.assign({
       membership: true
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -157,9 +174,10 @@ class Roles {
      * https://github.com/jdalrymple/node-gitlab/blob/3.6.0/src/services/Projects.js#L7
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#list-all-projects
      */
-    return this.api.Projects.all({
+    return this.api.Projects.all(Object.assign({
       min_access_level: level
-    }).then((res) => {
+    }, this.pageCfg)).then((res) => {
+
       let roleList = [];
 
       if (res && res.length > 0) {

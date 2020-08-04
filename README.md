@@ -4,7 +4,7 @@ Verdaccio authentication plugin by gitlab personal access tokens.
 
 ## Installation
 
-``` bash
+```bash
 npm install --global verdaccio-auth-gitlab
 ```
 
@@ -16,6 +16,9 @@ auth:
   auth-gitlab:
     # Gitlab server (default: https://gitlab.com)
     url: https://gitlab.com
+
+    # Gitlab token type (default: personal)
+    tokenType: personal # options: personal/oauth/job
 
     # Check gitlab Role
     role:
@@ -59,6 +62,15 @@ auth:
       # Max cache second (default: 300)
       # Warning: Set to 0 will cause performance degradation
       maxSecond: 300
+
+    # Limit the scope of the all function
+    page:
+      # Number of items to list per page (default: 100)
+      # Warning: The maximum value is 100
+      perPage: 100
+      # Max page number (default: 0)
+      # Warning: Set to 0 will get all data
+      maxPages: 0
 ```
 
 ## Role
@@ -98,6 +110,15 @@ The access levels are defined in the `Gitlab::Access` module. Currently, these l
 30 => Developer access
 40 => Maintainer access
 50 => Owner access # Only valid for groups
+```
+
+## Use
+
+```bash
+npm login --registry=http://xxx
+
+Username: gitlab username
+Password: gitlab personal access tokens
 ```
 
 ## License

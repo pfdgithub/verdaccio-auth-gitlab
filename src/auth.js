@@ -4,9 +4,14 @@ const Roles = require('./roles');
 const Queue = require('./queue');
 const roleUtil = require('./roleUtil');
 
+const TOKEN_TYPE_OPTIONS = ['personal', 'oauth', 'job'];
+
 const URL = 'https://gitlab.com';
+const TOKEN_TYPE = 'personal';
 const MAX_COUNT = 1000;
 const MAX_SECOND = 300;
+const PER_PAGE = 100;
+const MAX_PAGES = 0;
 
 class Auth {
   classProperties() {
@@ -18,6 +23,7 @@ class Auth {
     this.authQueue = null;
 
     this.url = URL;
+    this.tokenType = TOKEN_TYPE;
     this.role = {
       user: true,
       groupOwner: false,
@@ -31,6 +37,10 @@ class Auth {
       maxCount: MAX_COUNT,
       maxSecond: MAX_SECOND
     };
+    this.page = {
+      perPage: PER_PAGE,
+      maxPages: MAX_PAGES
+    };
   }
 
   constructor(config, options) {
@@ -43,6 +53,8 @@ class Auth {
   }
 
   initParams(config, options) {
+    config = config || {};
+
     let isType = (value, type) => {
       return Object.prototype.toString.call(value) === `[object ${type}]`;
     };
@@ -51,13 +63,17 @@ class Auth {
       this.url = config.url;
     }
 
+    if (isType(config.tokenType, 'String') && TOKEN_TYPE_OPTIONS.indexOf(config.tokenType) !== -1) {
+      this.tokenType = config.tokenType;
+    }
+
     if (isType(config.role, 'Object')) {
       if (isType(config.role.user, 'Boolean')) {
         this.role.user = config.role.user;
       }
 
       // Disable user role will make it impossible to check the relevance between username and token.
-      if (config.role.user === true) {
+      if (this.role.user === true) {
         if (isType(config.role.groupOwner, 'Boolean')) {
           this.role.groupOwner = config.role.groupOwner;
         }
@@ -85,12 +101,22 @@ class Auth {
     }
 
     if (isType(config.cache, 'Object')) {
-      if (isType(config.cache.maxCount, 'Number')) {
+      if (isType(config.cache.maxCount, 'Number') && config.cache.maxCount >= 0) {
         this.cache.maxCount = config.cache.maxCount;
       }
 
-      if (isType(config.cache.maxSecond, 'Number')) {
+      if (isType(config.cache.maxSecond, 'Number') && config.cache.maxSecond >= 0) {
         this.cache.maxSecond = config.cache.maxSecond;
+      }
+    }
+
+    if (isType(config.page, 'Object')) {
+      if (isType(config.page.perPage, 'Number') && config.page.perPage >= 0) {
+        this.page.perPage = config.page.perPage;
+      }
+
+      if (isType(config.page.maxPages, 'Number') && config.page.maxPages >= 0) {
+        this.page.maxPages = config.page.maxPages;
       }
     }
 
@@ -128,18 +154,28 @@ class Auth {
     });
   }
 
-  add_user(user, password, cb) {
-    let roles = new Roles(this.logger, this.url, password);
+  adduser(user, password, cb) {
+    let roles = new Roles(this.logger, this.url, this.tokenType, password, this.page);
 
     roles.userCurrent(user).then(() => {
-      this.logger.info('[add_user]', `Check gitlab user: ${user}`);
+      this.logger.info('[adduser]', `Check gitlab user: ${user}`);
 
       return cb(null, true);
     }).catch((error) => {
-      this.logger.info('[add_user]', `Check gitlab user ${user} failed: ${error.message}`);
+      this.logger.info('[adduser]', `Check gitlab user ${user} failed: ${error.message}`);
 
       return cb(error);
     });
+  }
+
+  changePassword(user, password, newPassword, cb) {
+    let error = 'Please go to gitlab to modify token';
+    this.logger.info('[changePassword]', `Change user ${user} password failed: ${error}`);
+    return cb(new Error(error));
+  }
+
+  add_user(user, password, cb) {
+    this.adduser(user, password, cb);
   }
 
   allow_access(user, pkg, cb) {
@@ -148,6 +184,10 @@ class Auth {
 
   allow_publish(user, pkg, cb) {
     this.allowAction('publish', user, pkg, cb);
+  }
+
+  allow_unpublish(user, pkg, cb) {
+    this.allowAction('unpublish', user, pkg, cb);
   }
 
   allowAction(action, user, pkg, cb) {
@@ -191,7 +231,7 @@ class Auth {
   checkRole(user, password, cb) {
     let roleList = [];
     let rolePromises = [];
-    let roles = new Roles(this.logger, this.url, password);
+    let roles = new Roles(this.logger, this.url, this.tokenType, password, this.page);
 
     let addRole = (list) => {
       roleList = roleList.concat(list);
