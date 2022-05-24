@@ -1,6 +1,6 @@
 # verdaccio-auth-gitlab
 
-Verdaccio authentication plugin by gitlab personal access tokens.
+Verdaccio authentication plugin by gitlab personal access token or oauth token or ci job token.
 
 ## Installation
 
