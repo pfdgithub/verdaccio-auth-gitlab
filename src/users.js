@@ -7,8 +7,11 @@ class Users {
     this.maxSecond = 0;
   }
 
-  constructor(logger, maxCount, maxSecond) {
+  constructor(logger, options) {
     this.classProperties();
+
+    let maxCount = options.maxCount;
+    let maxSecond = options.maxSecond;
 
     this.logger = logger;
     this.users = new Map();

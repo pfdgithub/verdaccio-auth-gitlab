@@ -10,10 +10,19 @@ class Roles {
     this.tokenType = '';
     this.token = '';
     this.pageCfg = {};
+    this.fullGroupPath = false;
+    this.fullProjectPath = false;
   }
 
-  constructor(logger, url, tokenType, token, pageCfg) {
+  constructor(logger, options) {
     this.classProperties();
+
+    let url = options.url;
+    let tokenType = options.tokenType;
+    let token = options.token;
+    let pageCfg = options.pageCfg;
+    let fullGroupPath = options.fullGroupPath;
+    let fullProjectPath = options.fullProjectPath;
 
     let cfg = {
       host: url,
@@ -32,6 +41,8 @@ class Roles {
     this.url = url;
     this.tokenType = tokenType;
     this.token = token;
+    this.fullGroupPath = fullGroupPath;
+    this.fullProjectPath = fullProjectPath;
 
     if (pageCfg.perPage > 0) {
       this.pageCfg.perPage = pageCfg.perPage;
@@ -76,7 +87,8 @@ class Roles {
       let roleList = [];
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getGroupRole(item.path, 'owner');
+          let _path = this.fullGroupPath ? item.full_path : item.path;
+          let role = roleUtil.getGroupRole(_path, 'owner');
           roleList.push(role);
         });
       }
@@ -97,7 +109,8 @@ class Roles {
 
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getGroupRole(item.path, 'member');
+          let _path = this.fullGroupPath ? item.full_path : item.path;
+          let role = roleUtil.getGroupRole(_path, 'member');
           roleList.push(role);
         });
       }
@@ -118,7 +131,8 @@ class Roles {
 
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getGroupRole(item.path, 'level', level);
+          let _path = this.fullGroupPath ? item.full_path : item.path;
+          let role = roleUtil.getGroupRole(_path, 'level', level);
           roleList.push(role);
         });
       }
@@ -139,7 +153,8 @@ class Roles {
 
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getProjectRole(item.path, 'owner');
+          let _path = this.fullProjectPath ? item.path_with_namespace : item.path;
+          let role = roleUtil.getProjectRole(_path, 'owner');
           roleList.push(role);
         });
       }
@@ -160,7 +175,8 @@ class Roles {
 
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getProjectRole(item.path, 'member');
+          let _path = this.fullProjectPath ? item.path_with_namespace : item.path;
+          let role = roleUtil.getProjectRole(_path, 'member');
           roleList.push(role);
         });
       }
@@ -182,7 +198,8 @@ class Roles {
 
       if (res && res.length > 0) {
         res.forEach((item) => {
-          let role = roleUtil.getProjectRole(item.path, 'level', level);
+          let _path = this.fullProjectPath ? item.path_with_namespace : item.path;
+          let role = roleUtil.getProjectRole(_path, 'level', level);
           roleList.push(role);
         });
       }

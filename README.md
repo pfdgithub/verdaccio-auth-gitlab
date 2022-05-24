@@ -20,6 +20,12 @@ auth:
     # Gitlab token type (default: personal)
     tokenType: personal # options: personal/oauth/job
 
+    # Full group path (default: false)
+    fullGroupPath: false
+
+    # Full project path with namespace (default: false)
+    fullProjectPath: false
+
     # Check gitlab Role
     role:
       # Gitlab user role (default: true)

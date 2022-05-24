@@ -24,6 +24,8 @@ class Auth {
 
     this.url = URL;
     this.tokenType = TOKEN_TYPE;
+    this.fullGroupPath = false;
+    this.fullProjectPath = false;
     this.role = {
       user: true,
       groupOwner: false,
@@ -65,6 +67,14 @@ class Auth {
 
     if (isType(config.tokenType, 'String') && TOKEN_TYPE_OPTIONS.indexOf(config.tokenType) !== -1) {
       this.tokenType = config.tokenType;
+    }
+
+    if (isType(config.fullGroupPath, 'Boolean')) {
+      this.fullGroupPath = config.fullGroupPath;
+    }
+
+    if (isType(config.fullProjectPath, 'Boolean')) {
+      this.fullProjectPath = config.fullProjectPath;
     }
 
     if (isType(config.role, 'Object')) {
@@ -121,7 +131,10 @@ class Auth {
     }
 
     this.logger = new Logger(options.logger);
-    this.users = new Users(this.logger, this.cache.maxCount, this.cache.maxSecond);
+    this.users = new Users(this.logger, {
+      maxCount: this.cache.maxCount,
+      maxSecond: this.cache.maxSecond
+    });
     this.authQueue = new Queue(this.logger);
 
     this.logger.info('[initParams]', config);
@@ -155,7 +168,14 @@ class Auth {
   }
 
   adduser(user, password, cb) {
-    let roles = new Roles(this.logger, this.url, this.tokenType, password, this.page);
+    let roles = new Roles(this.logger, {
+      url: this.url,
+      tokenType: this.tokenType,
+      token: password,
+      pageCfg: this.page,
+      fullGroupPath: this.fullGroupPath,
+      fullProjectPath: this.fullProjectPath
+    });
 
     roles.userCurrent(user).then(() => {
       this.logger.info('[adduser]', `Check gitlab user: ${user}`);
@@ -231,7 +251,14 @@ class Auth {
   checkRole(user, password, cb) {
     let roleList = [];
     let rolePromises = [];
-    let roles = new Roles(this.logger, this.url, this.tokenType, password, this.page);
+    let roles = new Roles(this.logger, {
+      url: this.url,
+      tokenType: this.tokenType,
+      token: password,
+      pageCfg: this.page,
+      fullGroupPath: this.fullGroupPath,
+      fullProjectPath: this.fullProjectPath
+    });
 
     let addRole = (list) => {
       roleList = roleList.concat(list);
