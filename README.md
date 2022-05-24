@@ -90,13 +90,13 @@ packages:
 ```
 
 `$gitlab:user` All users  
-`$gitlab:user:xxx` The user whose username is `xxx`  
-`$gitlab:group:xxx:owner` Owner of the group which path is `xxx`  
-`$gitlab:group:xxx:member` Member of the group which path is `xxx`  
-`$gitlab:group:xxx:level:40` Maintainer(Master) or owner of the group which path is `xxx`  
-`$gitlab:project:xxx:owner` Owner of the project which path is `xxx`  
-`$gitlab:project:xxx:member` Member of the project which path is `xxx`  
-`$gitlab:project:xxx:level:30` Developer or maintainer(master) or owner of the project which path is `xxx`  
+`$gitlab:user:xxx` The user whose username is `encodeURIComponent(xxx)`  
+`$gitlab:group:xxx:owner` Owner of the group which path is `encodeURIComponent(xxx)`  
+`$gitlab:group:xxx:member` Member of the group which path is `encodeURIComponent(xxx)`  
+`$gitlab:group:xxx:level:40` Maintainer(Master) or owner of the group which path is `encodeURIComponent(xxx)`  
+`$gitlab:project:xxx:owner` Owner of the project which path is `encodeURIComponent(xxx)`  
+`$gitlab:project:xxx:member` Member of the project which path is `encodeURIComponent(xxx)`  
+`$gitlab:project:xxx:level:30` Developer or maintainer(master) or owner of the project which path is `encodeURIComponent(xxx)`  
 
 The following placeholder is allowed in `xxx`  
 `[pkgScope]` package scope  
