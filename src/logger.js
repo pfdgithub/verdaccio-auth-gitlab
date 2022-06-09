@@ -11,44 +11,44 @@ class Logger {
     this.logger = logger;
   }
 
-  log(type, ...rest) {
+  log(type, message, ...rest) {
     if (this.logger && this.logger[type]) {
-      this.logger[type](`[${PLUGIN_NAME}]`, ...rest);
+      this.logger[type](`[${PLUGIN_NAME}] ${message}`, ...rest);
     }
     else if (console[type]) {
-      console[type](`[${PLUGIN_NAME}]`, ...rest);
+      console[type](`[${PLUGIN_NAME}] ${message}`, ...rest);
     }
     else {
-      console.log(`[${PLUGIN_NAME}]`, `[${type}]`, ...rest);
+      console.log(`[${PLUGIN_NAME}] [${type}] ${message}`, ...rest);
     }
   }
 
-  trace(...rest) {
-    this.log('trace', ...rest);
+  trace(message, ...rest) {
+    this.log('trace', message, ...rest);
   }
 
-  debug(...rest) {
-    this.log('debug', ...rest);
+  debug(message, ...rest) {
+    this.log('debug', message, ...rest);
   }
 
-  info(...rest) {
-    this.log('info', ...rest);
+  info(message, ...rest) {
+    this.log('info', message, ...rest);
   }
 
-  http(...rest) {
-    this.log('http', ...rest);
+  http(message, ...rest) {
+    this.log('http', message, ...rest);
   }
 
-  warn(...rest) {
-    this.log('warn', ...rest);
+  warn(message, ...rest) {
+    this.log('warn', message, ...rest);
   }
 
-  error(...rest) {
-    this.log('error', ...rest);
+  error(message, ...rest) {
+    this.log('error', message, ...rest);
   }
 
-  fatal(...rest) {
-    this.log('fatal', ...rest);
+  fatal(message, ...rest) {
+    this.log('fatal', message, ...rest);
   }
 
 }

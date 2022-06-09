@@ -19,10 +19,10 @@ class Queue {
 
     // Allow the first auth request
     if (newAuthQueue.length > 1) {
-      this.logger.info('[userAuthQueue]', `Queue user ${user}'s follow-up request: ${newAuthQueue.length}`);
+      this.logger.info(`[userAuthQueue] Queue user ${user}'s follow-up request: ${newAuthQueue.length}`);
       return;
     }
-    this.logger.info('[userAuthQueue]', `Allow user ${user}'s first request: ${newAuthQueue.length}`);
+    this.logger.info(`[userAuthQueue] Allow user ${user}'s first request: ${newAuthQueue.length}`);
 
     authRequest((error, roleList) => {
       // Clear queue

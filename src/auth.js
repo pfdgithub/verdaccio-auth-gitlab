@@ -147,7 +147,7 @@ class Auth {
     });
     this.authQueue = new Queue(this.logger);
 
-    this.logger.info('[initParams]', config);
+    this.logger.info(`[initParams] ${JSON.stringify(config)}`);
   }
 
   authenticate(user, password, cb) {
@@ -155,12 +155,12 @@ class Auth {
     let userCache = this.users.getUser(user);
 
     if (userCache) {
-      this.logger.info('[authenticate]', `User ${user} hit cache`);
+      this.logger.info(`[authenticate] User ${user} hit cache`);
 
       return cb(null, userCache.groups);
     }
     else {
-      this.logger.info('[authenticate]', `User ${user} missing cache`);
+      this.logger.info(`[authenticate] User ${user} missing cache`);
     }
 
     // Queue the auth request
@@ -190,11 +190,11 @@ class Auth {
     });
 
     roles.userCurrent(user).then(() => {
-      this.logger.info('[adduser]', `Check gitlab user: ${user}`);
+      this.logger.info(`[adduser] Check gitlab user: ${user}`);
 
       return cb(null, true);
     }).catch((error) => {
-      this.logger.info('[adduser]', `Check gitlab user ${user} failed: ${error.message}`);
+      this.logger.info(`[adduser] Check gitlab user ${user} failed: ${error.message}`);
 
       return cb(error);
     });
@@ -202,7 +202,7 @@ class Auth {
 
   changePassword(user, password, newPassword, cb) {
     let error = 'Please go to gitlab to modify token';
-    this.logger.info('[changePassword]', `Change user ${user} password failed: ${error}`);
+    this.logger.info(`[changePassword] Change user ${user} password failed: ${error}`);
     return cb(new Error(error));
   }
 
@@ -249,13 +249,13 @@ class Auth {
       }
 
       if (groups.includes(actionRole)) {
-        this.logger.info(`[allow_${action}]`, `Allow user ${userName || 'anonymous'} ${action} ${fullName}`);
+        this.logger.info(`[allow_${action}] Allow user ${userName || 'anonymous'} ${action} ${fullName}`);
 
         return cb(null, true);
       }
     }
 
-    this.logger.info(`[allow_${action}]`, `Block user ${userName || 'anonymous'} ${action} ${fullName}`);
+    this.logger.info(`[allow_${action}] Block user ${userName || 'anonymous'} ${action} ${fullName}`);
 
     return cb(null, false);
   }
@@ -320,11 +320,11 @@ class Auth {
     }
 
     Promise.all(rolePromises).then(() => {
-      this.logger.info('[checkRole]', `User ${user} role: ${roleList.toString()}`);
+      this.logger.info(`[checkRole] User ${user} role: ${roleList.toString()}`);
 
       return cb(null, roleList);
     }).catch((error) => {
-      this.logger.info('[checkRole]', `Check user ${user} role failed: ${error.message}`, error);
+      this.logger.info(`[checkRole] Check user ${user} role failed: ${error.message}`, error);
 
       return cb(error);
     });

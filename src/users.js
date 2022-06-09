@@ -43,13 +43,13 @@ class Users {
     // First check
     if (this.users.size >= this.maxCount && this.maxSecond > 0) {
       let keys = this.deleteAllStaleUser();
-      this.logger.info('[userCache]', `Cleaned all stale user: ${keys.toString()}`);
+      this.logger.info(`[userCache] Cleaned all stale user: ${keys.toString()}`);
     }
 
     // Second check
     if (this.users.size >= this.maxCount) {
       let key = deleteOldestUser();
-      this.logger.info('[userCache]', `Cleaned the oldest user: ${key}`);
+      this.logger.info(`[userCache] Cleaned the oldest user: ${key}`);
     }
 
     this.users.set(user, {
