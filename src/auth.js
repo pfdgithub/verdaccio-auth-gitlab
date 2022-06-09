@@ -184,7 +184,9 @@ class Auth {
       token: password,
       pageCfg: this.page,
       fullGroupPath: this.fullGroupPath,
-      fullProjectPath: this.fullProjectPath
+      fullProjectPath: this.fullProjectPath,
+      extendGroupOptions: this.extendGroupOptions,
+      extendProjectOptions: this.extendProjectOptions
     });
 
     roles.userCurrent(user).then(() => {
