@@ -12,6 +12,8 @@ class Roles {
     this.pageCfg = {};
     this.fullGroupPath = false;
     this.fullProjectPath = false;
+    this.extendGroupOptions = null;
+    this.extendProjectOptions = null;
   }
 
   constructor(logger, options) {
@@ -21,8 +23,6 @@ class Roles {
     let tokenType = options.tokenType;
     let token = options.token;
     let pageCfg = options.pageCfg;
-    let fullGroupPath = options.fullGroupPath;
-    let fullProjectPath = options.fullProjectPath;
 
     let cfg = {
       host: url,
@@ -41,8 +41,10 @@ class Roles {
     this.url = url;
     this.tokenType = tokenType;
     this.token = token;
-    this.fullGroupPath = fullGroupPath;
-    this.fullProjectPath = fullProjectPath;
+    this.fullGroupPath = options.fullGroupPath;
+    this.fullProjectPath = options.fullProjectPath;
+    this.extendGroupOptions = options.extendGroupOptions;
+    this.extendProjectOptions = options.extendProjectOptions;
 
     if (pageCfg.perPage > 0) {
       this.pageCfg.perPage = pageCfg.perPage;
@@ -83,7 +85,7 @@ class Roles {
      */
     return this.api.Groups.all(Object.assign({
       owned: true
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendGroupOptions)).then((res) => {
       let roleList = [];
       if (res && res.length > 0) {
         res.forEach((item) => {
@@ -104,7 +106,7 @@ class Roles {
      */
     return this.api.Groups.all(Object.assign({
       all_available: false
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendGroupOptions)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -126,7 +128,7 @@ class Roles {
      */
     return this.api.Groups.all(Object.assign({
       min_access_level: level
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendGroupOptions)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -148,7 +150,7 @@ class Roles {
      */
     return this.api.Projects.all(Object.assign({
       owned: true
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendProjectOptions)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -170,7 +172,7 @@ class Roles {
      */
     return this.api.Projects.all(Object.assign({
       membership: true
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendProjectOptions)).then((res) => {
       let roleList = [];
 
       if (res && res.length > 0) {
@@ -192,7 +194,7 @@ class Roles {
      */
     return this.api.Projects.all(Object.assign({
       min_access_level: level
-    }, this.pageCfg)).then((res) => {
+    }, this.pageCfg, this.extendProjectOptions)).then((res) => {
 
       let roleList = [];
 

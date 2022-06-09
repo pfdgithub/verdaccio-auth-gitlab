@@ -26,6 +26,8 @@ class Auth {
     this.tokenType = TOKEN_TYPE;
     this.fullGroupPath = false;
     this.fullProjectPath = false;
+    this.extendGroupOptions = null;
+    this.extendProjectOptions = null;
     this.role = {
       user: true,
       groupOwner: false,
@@ -75,6 +77,14 @@ class Auth {
 
     if (isType(config.fullProjectPath, 'Boolean')) {
       this.fullProjectPath = config.fullProjectPath;
+    }
+
+    if (isType(config.extendGroupOptions, 'Object')) {
+      this.extendGroupOptions = config.extendGroupOptions;
+    }
+
+    if (isType(config.extendProjectOptions, 'Object')) {
+      this.extendProjectOptions = config.extendProjectOptions;
     }
 
     if (isType(config.role, 'Object')) {
