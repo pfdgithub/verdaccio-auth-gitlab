@@ -20,6 +20,9 @@
     "gitlab",
     "personal",
     "access",
+    "oauth",
+    "ci",
+    "job",
     "token"
   ],
   "engines": {
