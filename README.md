@@ -130,7 +130,7 @@ The access levels are defined in the `Gitlab::Access` module. Currently, these l
 npm login --registry=http://xxx
 
 Username: gitlab username
-Password: gitlab personal access tokens
+Password: gitlab personal/oauth/job token
 ```
 
 ## License
