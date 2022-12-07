@@ -55,7 +55,7 @@ class Users {
 
     this.users.set(user, {
       lastModified: Date.now(),
-      hash: stringHash(password),
+      hash: this.hashPwd(password),
       groups: groups
     });
   }
@@ -65,7 +65,11 @@ class Users {
   }
 
   isSameHash(value, password) {
-    return value && (value.hash === stringHash(password));
+    return value && (value.hash === this.hashPwd(password));
+  }
+
+  hashPwd(password) {
+    return password ? stringHash(password) : 0;
   }
 
   deleteOldestUser() {
