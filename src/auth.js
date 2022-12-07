@@ -152,7 +152,7 @@ class Auth {
 
   authenticate(user, password, cb) {
     // Check cache
-    let userCache = this.users.getUser(user);
+    let userCache = this.users.getUser(user, password);
 
     if (userCache) {
       this.logger.info(`[authenticate] User ${user} hit cache`);
@@ -169,7 +169,7 @@ class Auth {
       this.checkRole(user, password, (error, roleList) => {
         if (!error) {
           // Update cache
-          this.users.setUser(user, roleList);
+          this.users.setUser(user, password, roleList);
         }
 
         cb(error, roleList);
@@ -178,16 +178,7 @@ class Auth {
   }
 
   adduser(user, password, cb) {
-    let roles = new Roles(this.logger, {
-      url: this.url,
-      tokenType: this.tokenType,
-      token: password,
-      pageCfg: this.page,
-      fullGroupPath: this.fullGroupPath,
-      fullProjectPath: this.fullProjectPath,
-      extendGroupOptions: this.extendGroupOptions,
-      extendProjectOptions: this.extendProjectOptions
-    });
+    let roles = this.createRoles(password);
 
     roles.userCurrent(user).then(() => {
       this.logger.info(`[adduser] Check gitlab user: ${user}`);
@@ -260,9 +251,7 @@ class Auth {
     return cb(null, false);
   }
 
-  checkRole(user, password, cb) {
-    let roleList = [];
-    let rolePromises = [];
+  createRoles(password) {
     let roles = new Roles(this.logger, {
       url: this.url,
       tokenType: this.tokenType,
@@ -273,6 +262,14 @@ class Auth {
       extendGroupOptions: this.extendGroupOptions,
       extendProjectOptions: this.extendProjectOptions
     });
+
+    return roles;
+  }
+
+  checkRole(user, password, cb) {
+    let roleList = [];
+    let rolePromises = [];
+    let roles = this.createRoles(password);
 
     let addRole = (list) => {
       roleList = roleList.concat(list);

@@ -1,3 +1,5 @@
+const stringHash = require('./string-hash');
+
 class Users {
   classProperties() {
     this.logger = null;
@@ -20,22 +22,21 @@ class Users {
     this.maxSecond = maxSecond > 0 ? maxSecond : 0;
   }
 
-  getUser(user) {
+  getUser(user, password) {
     if (this.maxCount === 0) {
       return;
     }
 
     let value = this.users.get(user);
-    if (this.isStaleUser(value)) {
+    if (this.isStaleUser(value) || value.hash !== stringHash(password)) {
       this.users.delete(user);
       return;
     }
-    else {
-      return value;
-    }
+
+    return value;
   }
 
-  setUser(user, groups) {
+  setUser(user, password, groups) {
     if (this.maxCount === 0) {
       return;
     }
@@ -54,6 +55,7 @@ class Users {
 
     this.users.set(user, {
       lastModified: Date.now(),
+      hash: stringHash(password),
       groups: groups
     });
   }
