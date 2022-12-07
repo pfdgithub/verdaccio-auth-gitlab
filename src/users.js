@@ -28,7 +28,7 @@ class Users {
     }
 
     let value = this.users.get(user);
-    if (this.isStaleUser(value) || !this.isSameHash(password)) {
+    if (this.isStaleUser(value) || !this.isSameHash(value, password)) {
       this.users.delete(user);
       return;
     }
