@@ -28,7 +28,7 @@ class Users {
     }
 
     let value = this.users.get(user);
-    if (this.isStaleUser(value) || value.hash !== stringHash(password)) {
+    if (this.isStaleUser(value) || !this.isSameHash(password)) {
       this.users.delete(user);
       return;
     }
@@ -62,6 +62,10 @@ class Users {
 
   isStaleUser(value) {
     return value && ((Date.now() - value.lastModified) >= (this.maxSecond * 1000));
+  }
+
+  isSameHash(value, password) {
+    return value && (value.hash === stringHash(password));
   }
 
   deleteOldestUser() {
