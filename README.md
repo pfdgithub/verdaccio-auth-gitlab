@@ -1,3 +1,5 @@
+**Apologies, due to changes in my work environment, I no longer use Verdaccio and GitLab. Consequently, I am unable to continue maintaining this package. Please feel free to fork and maintain it on your own.**
+
 # verdaccio-auth-gitlab
 
 Verdaccio authentication plugin by gitlab personal access token or oauth token or ci job token.
